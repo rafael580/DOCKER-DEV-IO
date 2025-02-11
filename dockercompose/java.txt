@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  java21:
+    image: openjdk:21-jdk  # Usando a imagem oficial do OpenJDK 21 (Java 21)
+    container_name: java21_container
+    working_dir: /workspace  # Define o diretório de trabalho no contêiner (onde o código ficará)
+    volumes:
+      - ./workspace:/workspace  # Mapeia o diretório local ./workspace para /workspace dentro do contêiner
+    ports:
+      - "8080:8080"  # Expondo a porta 8080 (se necessário para o seu app)
+    command: tail -f /dev/null  # Mantém o contêiner rodando sem fazer nada, apenas para manter o acesso ao contêiner aberto
+    networks:
+      - java_network
+
+networks:
+  java_network:
+    driver: bridge
+

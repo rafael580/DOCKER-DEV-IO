@@ -1,0 +1,92 @@
+# Etapa 1: Construção da imagem com o código da aplicação Java
+FROM openjdk:21-jdk-slim AS build
+
+# Definindo o diretório de trabalho
+WORKDIR /app
+
+# Copiando os arquivos do projeto Spring Boot
+COPY pom.xml .
+COPY src ./src
+
+# Baixando dependências do Maven e compilando o projeto
+RUN apt-get update && apt-get install -y maven
+RUN mvn clean package -DskipTests
+
+# Etapa 2: Criando a imagem com o ambiente de execução e as dependências
+FROM openjdk:21-jdk-slim AS runtime
+
+# Variáveis de ambiente para o Spring Boot
+ENV SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/mydatabase
+ENV SPRING_DATASOURCE_USERNAME=root
+ENV SPRING_DATASOURCE_PASSWORD=root
+ENV SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+ENV SPRING_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver
+ENV SPRING_JPA_HIBERNATE_DDL_AUTO=update
+ENV SPRING_JPA_SHOW_SQL=true
+
+# Instalando dependências para a AWS CLI
+RUN apt-get update && apt-get install -y \
+    curl \
+    unzip \
+    && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+    && unzip awscliv2.zip \
+    && sudo ./aws/install
+
+# Definindo o diretório de trabalho
+WORKDIR /app
+
+# Copiando o arquivo JAR compilado da etapa de build
+COPY --from=build /app/target/myapp.jar /app/myapp.jar
+
+# Expondo a porta 8080 para o serviço Spring Boot
+EXPOSE 8080
+
+# Comando de entrada para iniciar o Spring Boot
+ENTRYPOINT ["java", "-jar", "myapp.jar"]
+
+# Etapa 3: Configuração do MySQL com dados persistentes
+FROM mysql:8.0 AS db
+
+# Configurando variáveis de ambiente para o MySQL
+ENV MYSQL_ROOT_PASSWORD=root
+ENV MYSQL_DATABASE=mydatabase
+ENV MYSQL_USER=myuser
+ENV MYSQL_PASSWORD=mypassword
+
+# Persistência de dados
+VOLUME /var/lib/mysql
+
+# Etapa 4: Configuração do Kafka
+FROM confluentinc/cp-kafka:latest AS kafka
+
+# Variáveis de ambiente para o Kafka
+ENV KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+ENV KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092
+ENV KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+
+# Etapa 5: Configuração do PostgreSQL
+FROM postgres:13 AS postgres
+
+# Variáveis de ambiente para o PostgreSQL
+ENV POSTGRES_USER=myuser
+ENV POSTGRES_PASSWORD=mypassword
+ENV POSTGRES_DB=mydb
+
+# Etapa final: Imagem com a aplicação Spring Boot
+FROM openjdk:21-jdk-slim AS final
+
+# Definindo o diretório de trabalho
+WORKDIR /app
+
+# Copiando os JARs e configurações para o ambiente final
+COPY --from=build /app/target/myapp.jar /app/myapp.jar
+COPY --from=db /var/lib/mysql /var/lib/mysql
+COPY --from=kafka /etc/kafka /etc/kafka
+COPY --from=postgres /var/lib/postgresql /var/lib/postgresql
+
+# Expondo a porta 8080 da aplicação
+EXPOSE 8080
+
+# Comando para iniciar o Spring Boot
+ENTRYPOINT ["java", "-jar", "myapp.jar"]
+

@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack
+    environment:
+      - SERVICES=s3,dynamodb,sqs,sns,ec2,lambda,cloudwatch,cloudformation,iam,sts,ses,apigateway,route53,s3,redshift,swf,eks,elasticloadbalancing,elasticsearch,apigateway
+      - DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_REGION=us-east-1
+      - AWS_ENDPOINT=http://localstack:4566
+      - LOCALSTACK_API_KEY=your-api-key
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DEBUG=1
+      - LOCALSTACK_DOCKER_SOCKET=/var/run/docker.sock
+      - LOCALSTACK_VOLUME_DIR=/tmp/localstack
+      - EDGE_PORT=4566
+      - DOCKER_LAMBDA_USE_RUNTIME=python3.8
+      - LAMBDA_EXECUTOR=docker
+      - LAMBDA_REMOTE_DOCKER=true
+      - AWS_REGION=us-east-1
+      - LOCALSTACK_HOST=localhost
+      - LOCALSTACK_MODE=standalone
+      - HOST_TMP_FOLDER=/tmp/localstack
+      - DATA_DIR=/var/lib/localstack/data
+      - SERVICES=s3,dynamodb,sqs,sns,cloudwatch,ec2,cloudformation,iam,sts,apigateway,route53
+      - AWS_DEFAULT_REGION=us-east-1
+      - EDGE_PORT=4566
+      - LOCALSTACK_SINGLE_CONTAINER=true
+      - KINESIS=1
+      - REDSHIFT=1
+      - SWF=1
+      - SNS=1
+      - SQS=1
+      - DYNAMODB=1
+      - S3=1
+      - LAMBDA=1
+      - SES=1
+      - IAM=1
+      - APIGATEWAY=1
+      - ROUTE53=1
+      - CLOUDWATCH=1
+      - CLOUDWATCH_LOGS=1
+      - EC2=1
+      - EKS=1
+      - ELASTICSEARCH=1
+      - ELASTICLOADBALANCING=1
+      - CERTIFICATE_MANAGER=1
+      - KMS=1
+      - STS=1
+      - SAM=1
+      - CLOUDFORMATION=1
+      - FIREHOSE=1
+      - DMS=1
+      - MEDIATRANSCRIBE=1
+      - DYNAMODB_STREAMS=1
+    ports:
+      - "4566:4566"  # Porta para acessar o LocalStack
+      - "4510-4559:4510-4559"  # Porta adicional para acesso aos serviços da AWS emulando as portas reais
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./localstack_data:/tmp/localstack"
+    networks:
+      - localstack_network
+
+networks:
+  localstack_network:
+    driver: bridge

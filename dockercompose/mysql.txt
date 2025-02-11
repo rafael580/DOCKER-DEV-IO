@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+    MYSQL_DATABASE: mydatabase                      # cria o banco dentro do container
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: mydatabase
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+      MYSQL_INITDB_SKIP_TZINFO: "yes"               # Pular a instalação de informações de fuso horário
+      MYSQL_ROOT_HOST: "%"                          # Permite acesso ao root de qualquer IP
+      MYSQL_CHARSET: utf8mb4                       # Charset do banco
+      MYSQL_COLLATION: utf8mb4_unicode_ci          # Collation
+      MYSQL_TCP_PORT: "3306"                       # Porta do MySQL
+      MYSQL_ALLOW_EMPTY_PASSWORD: "no"             # Não permitir senha vazia
+      MYSQL_DISABLE_LOCAL_INFILE: "yes"            # Desativa o carregamento local de arquivos
+      MYSQL_LOG_CONSOLE: "true"                    # Ativa o log no console
+      MYSQL_LOG_ERROR: /var/log/mysql/error.log    # Caminho do log de erros
+      MYSQL_LOG_QUERIES_NOT_using_indexes: "1"     # Log de queries que não usam índices
+      MYSQL_INNODB_FLUSH_LOG_AT_TRX_COMMIT: "1"    # Controle de flush no InnoDB
+      MYSQL_INNODB_LOG_BUFFER_SIZE: "8388608"      # Tamanho do buffer de log do InnoDB
+      MYSQL_INNODB_LOG_FILE_SIZE: "1073741824"    # Tamanho do arquivo de log do InnoDB
+      MYSQL_INNODB_BUFFER_POOL_SIZE: "2G"          # Tamanho do buffer pool do InnoDB
+      MYSQL_INNODB_LOCK_WAIT_TIMEOUT: "50"         # Timeout para bloqueios no InnoDB
+      MYSQL_MAX_CONNECTIONS: "151"                 # Número máximo de conexões simultâneas
+      MYSQL_WAIT_TIMEOUT: "28800"                  # Tempo de espera por conexões inativas
+      MYSQL_MAX_ALLOWED_PACKET: "16777216"         # Tamanho máximo de pacote
+      MYSQL_MAX_JOIN_SIZE: "1000000"               # Tamanho máximo de join
+      MYSQL_QUERY_CACHE_SIZE: "16777216"           # Tamanho do cache de queries
+      MYSQL_QUERY_CACHE_LIMIT: "1048576"           # Tamanho máximo de query no cache
+      MYSQL_QUERY_CACHE_TYPE: "ON"                 # Tipo de cache de queries
+      MYSQL_TMP_TABLE_SIZE: "16777216"             # Tamanho máximo de tabela temporária
+      MYSQL_MAX_HEAP_TABLE_SIZE: "16777216"        # Tamanho máximo da tabela heap
+      MYSQL_LOG_BIN: "mysql-bin"                   # Ativar binlog para replicação
+      MYSQL_BINLOG_FORMAT: "ROW"                   # Formato de binlog (ROW, STATEMENT, MIXED)
+      MYSQL_REPLICATION: "true"                    # Ativar replicação (se necessário)
+      MYSQL_SERVER_ID: "1"                         # ID do servidor para replicação
+      MYSQL_SYNC_MASTER: "true"                    # Sincronização do master na replicação
+      MYSQL_QUERY_LOG: "ON"                        # Ativa o log de consultas
+      MYSQL_DISABLE_LOGGING: "false"               # Desabilita logging
+      MYSQL_DISABLE_SYMKEY: "yes"                  # Desabilita a chave de segurança simbólica
+      MYSQL_MAX_ERROR_COUNT: "1000"                # Máximo de erros antes de desconectar
+      MYSQL_MAX_SESSIONS: "100"                    # Máximo de sessões por usuário
+      MYSQL_PERSIST_SOCKET: "true"                 # Persistência do socket
+      MYSQL_BACKLOG: "511"                         # Tamanho do backlog de conexões
+      MYSQL_INIT_FILE: "/docker-entrypoint-initdb.d/init.sql" # Arquivo de inicialização
+      MYSQL_SYSLOG_TAG: "mysql"                    # Tag do syslog
+      MYSQL_LOG_SLOW_QUERIES: "/var/log/mysql/slow-query.log"  # Log de consultas lentas
+      MYSQL_LONG_QUERY_TIME: "2"                   # Tempo para logar consultas lentas
+      MYSQL_SOCKET: "/var/lib/mysql/mysql.sock"    # Caminho do socket
+      MYSQL_KEY_BUFFER_SIZE: "16777216"            # Tamanho do buffer de chaves
+      MYSQL_TABLE_OPEN_CACHE: "2000"               # Número de tabelas abertas simultâneas
+      MYSQL_TABLE_DEF_CACHE: "4096"                # Cache de definições de tabelas
+      MYSQL_OPEN_FILES_LIMIT: "8192"               # Limite de arquivos abertos
+      MYSQL_MAX_TABLES: "5000"                     # Máximo de tabelas abertas
+      MYSQL_CHECK_TABLES: "NO"                     # Checar integridade das tabelas ao iniciar
+      MYSQL_STATS_MEM_SIZE: "52428800"             # Tamanho da memória usada para estatísticas
+      MYSQL_SLAVE_NET_TIMEOUT: "30"                # Timeout de rede para slaves
+      MYSQL_READ_ONLY: "OFF"                       # Habilitar modo somente leitura
+      MYSQL_STORAGE_ENGINE: "InnoDB"               # Motor de armazenamento padrão
+      MYSQL_SQL_MODE: "STRICT_TRANS_TABLES"        # Modo SQL
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d # Scripts de inicialização
+
+volumes:
+  mysql_data:
+    driver: local

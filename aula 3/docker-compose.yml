@@ -1,0 +1,57 @@
+version: '3.8'  # Define a versão do Docker Compose. Aqui, estamos usando a versão 3.8.
+services:
+  app:
+    build: .  # Inicia a construção da imagem Docker a partir do Dockerfile no diretório atual (.) para o serviço `app`.
+    container_name: springboot_app  # Dá um nome personalizado ao contêiner do Spring Boot.
+    ports:
+      - "8080:8080"  # Mapeia a porta 8080 do contêiner para a porta 8080 do host, permitindo acessar a aplicação na porta 8080 do localhost.
+    depends_on:
+      - db  # Define que o contêiner `app` depende do serviço `db` (MySQL). O Docker Compose vai iniciar `db` antes de `app`.
+      - kafka  # Define que o contêiner `app` depende do serviço `kafka`. O Docker Compose vai iniciar `kafka` antes de `app`.
+      - localstack  # Define que o contêiner `app` depende do serviço `localstack`. O Docker Compose vai iniciar `localstack` antes de `app`.
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/mydatabase  # Define a URL de conexão com o banco de dados MySQL, usando o nome do serviço `db` como host.
+      SPRING_DATASOURCE_USERNAME: root  # Define o nome de usuário do banco de dados como "root".
+      SPRING_DATASOURCE_PASSWORD: root  # Define a senha do banco de dados como "root".
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092  # Configura o endereço do servidor Kafka. Usa o nome do serviço `kafka` para o hostname.
+      AWS_ACCESS_KEY_ID: test  # Define a chave de acesso da AWS para a aplicação Spring (no caso, usando valores de teste com Localstack).
+      AWS_SECRET_ACCESS_KEY: test  # Define a chave secreta da AWS para a aplicação Spring.
+      AWS_REGION: us-east-1  # Define a região da AWS (us-east-1) para as interações com os serviços AWS (Localstack simula AWS).
+      AWS_ENDPOINT: http://localstack:4566  # Define o endpoint do Localstack (simulador AWS) como `http://localstack:4566`.
+  db:
+    image: mysql:8.0  # Usa a imagem oficial do MySQL, versão 8.0.
+    container_name: mysql_db  # Dá um nome personalizado ao contêiner de MySQL.
+    restart: always  # Faz o contêiner reiniciar automaticamente caso falhe ou o Docker reinicie.
+    environment:
+      MYSQL_ROOT_PASSWORD: root  # Define a senha do usuário root do MySQL.
+      MYSQL_DATABASE: mydatabase  # Define o nome do banco de dados que será criado no MySQL.
+    ports:
+      - "3306:3306"  # Mapeia a porta 3306 do contêiner para a porta 3306 do host, permitindo acessar o banco MySQL na porta 3306 do localhost.
+  kafka:
+    image: confluentinc/cp-kafka:latest  # Usa a imagem do Apache Kafka da Confluent (versão mais recente).
+    container_name: kafka  # Dá um nome personalizado ao contêiner do Kafka.
+    ports:
+      - "9092:9092"  # Mapeia a porta 9092 do contêiner para a porta 9092 do host, permitindo acessar o Kafka.
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092  # Define o endereço de publicidade do servidor Kafka, usando o nome do serviço `kafka` para o hostname.
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092  # Define os endereços nos quais o Kafka escuta (aqui, escuta em todas as interfaces).
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181  # Define o endereço do Zookeeper, que é uma dependência do Kafka.
+    depends_on:
+      - zookeeper  # Define que o Kafka depende do serviço `zookeeper`, o que significa que o Kafka só será iniciado após o Zookeeper.
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest  # Usa a imagem oficial do Zookeeper da Confluent.
+    container_name: zookeeper  # Dá um nome personalizado ao contêiner do Zookeeper.
+    ports:
+      - "2181:2181"  # Mapeia a porta 2181 do contêiner para a porta 2181 do host, permitindo acessar o Zookeeper.
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181  # Define a porta em que o Zookeeper escuta para conexões dos clientes.
+  localstack:
+    image: localstack/localstack  # Usa a imagem oficial do Localstack, que simula a AWS localmente.
+    container_name: localstack  # Dá um nome personalizado ao contêiner do Localstack.
+    environment:
+      - SERVICES=s3,sqs,sns  # Define os serviços AWS que serão simulados pelo Localstack (S3, SQS e SNS).
+      - DEFAULT_REGION=us-east-1  # Define a região da AWS simulada (us-east-1).
+      - AWS_ACCESS_KEY_ID=test  # Define a chave de acesso para a AWS simulada (no Localstack).
+      - AWS_SECRET_ACCESS_KEY=test  # Define a chave secreta para a AWS simulada (no Localstack).
+    ports:
+      - "4566:4566"  # Mapeia a porta 4566 do contêiner para a porta 4566 do host, permitindo acessar os serviços do Localstack (simulador de AWS).

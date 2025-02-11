@@ -1,0 +1,152 @@
+# 1. Definir a imagem base para OpenJDK (Java 21, por exemplo)
+FROM openjdk:21-jdk-slim AS base
+
+# 2. Definir o diretório de trabalho no contêiner
+WORKDIR /app
+
+# 3. Copiar o arquivo JAR para o contêiner
+COPY target/app.jar /app/app.jar
+
+# 4. Definir a variável de ambiente JAVA_HOME
+ENV JAVA_HOME=/usr/local/openjdk-21
+
+# 5. Definir a variável de ambiente para aceitar a licença Oracle
+ENV ACCEPT_EULA=Y
+
+# 6. Expor a porta que a aplicação Spring Boot vai rodar
+EXPOSE 8080
+
+# 7. Copiar os arquivos de configuração para o contêiner
+COPY src/main/resources/application.properties /app/application.properties
+
+# 8. Copiar arquivos adicionais de recursos ou dependências
+COPY src/main/resources/config/ /app/config/
+
+# 9. Definir uma variável de ambiente customizada para o app
+ENV APP_ENV=production
+
+# 10. Definir um parâmetro de memória para a JVM
+ENV JAVA_OPTS="-Xmx512m -Xms256m"
+
+# 11. Instalar dependências adicionais
+RUN apt-get update && apt-get install -y curl
+
+# 12. Verificar a versão do Java instalada no contêiner
+RUN java -version
+
+# 13. Criar um diretório para logs
+RUN mkdir /app/logs
+
+# 14. Definir um ponto de entrada para o contêiner (comando a ser executado ao iniciar)
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+
+# 15. Rodar a aplicação com um comando adicional se necessário
+CMD ["-Dspring.profiles.active=prod"]
+
+# 16. Copiar arquivos do diretório atual para o contêiner
+COPY . /app
+
+# 17. Limitar o número de processos (opcional para performance)
+RUN ulimit -n 65536
+
+# 18. Definir a variável de ambiente para um proxy, se necessário
+ENV HTTP_PROXY=http://proxy.example.com:8080
+ENV HTTPS_PROXY=http://proxy.example.com:8080
+
+# 19. Adicionar uma variável de ambiente de senha para o banco de dados
+ENV DB_PASSWORD=secret
+
+# 20. Definir um nome de usuário para o processo dentro do contêiner
+USER springboot
+
+# 21. Definir a localização do arquivo de log
+ENV LOG_DIR=/app/logs
+
+# 22. Copiar um script shell para o contêiner para inicializar o app
+COPY scripts/start.sh /app/start.sh
+
+# 23. Definir permissões para o script start.sh
+RUN chmod +x /app/start.sh
+
+# 24. Usar o script de inicialização como ponto de entrada
+ENTRYPOINT ["/app/start.sh"]
+
+# 25. Limitar o uso de memória (opcional)
+RUN echo "vm.overcommit_memory=1" >> /etc/sysctl.conf
+
+# 26. Configurar a política de execução de tempo de vida
+STOPSIGNAL SIGTERM
+
+# 27. Copiar dependências do sistema operacional se necessário
+COPY libs/ /app/libs/
+
+# 28. Criar um usuário não privilegiado para a execução do app
+RUN adduser --disabled-password --gecos "" springboot
+
+# 29. Definir a permissão do diretório de aplicação para o usuário criado
+RUN chown -R springboot:springboot /app
+
+# 30. Instalar dependências do sistema, como ferramentas de rede
+RUN apt-get install -y net-tools
+
+# 31. Adicionar um entrypoint alternativo para modo de teste
+ENTRYPOINT ["java", "-jar", "/app/app.jar", "-Dtest.mode=true"]
+
+# 32. Configurar o número de threads da JVM
+ENV _JAVA_OPTIONS="-XX:MaxRAMPercentage=75.0"
+
+# 33. Limitar a criação de arquivos temporários
+RUN mount -o loop /dev/zero /app/tmp
+
+# 34. Desabilitar a atualização automática do sistema (quando necessário)
+RUN apt-get -o Dpkg::Options::="--force-confold" upgrade -y
+
+# 35. Forçar o uso de uma versão específica do pacote
+RUN apt-get install -y curl=7.68.0-1ubuntu2.6
+
+# 36. Otimizar a camada de cache de dependências
+RUN apt-get install -y --no-install-recommends openjdk-21-jdk
+
+# 37. Configurar variáveis para AWS (se aplicável)
+ENV AWS_ACCESS_KEY_ID=your-access-key-id
+ENV AWS_SECRET_ACCESS_KEY=your-secret-access-key
+ENV AWS_REGION=us-east-1
+
+# 38. Instalar dependências de uma aplicação específica (ex: cliente AWS CLI)
+RUN apt-get install -y awscli
+
+# 39. Configurar um local para o app escrever arquivos temporários
+ENV TMP_DIR=/tmp/app
+
+# 40. Desabilitar o cache do APT para uma construção limpa
+RUN rm -rf /var/lib/apt/lists/*
+
+# 41. Adicionar certificados de segurança customizados
+COPY ./certificates/ /usr/local/share/ca-certificates/
+
+# 42. Atualizar certificados do contêiner
+RUN update-ca-certificates
+
+# 43. Configurar a localização de arquivos binários dentro do contêiner
+ENV PATH="/app/bin:$PATH"
+
+# 44. Limpar a cache do APT para reduzir o tamanho da imagem
+RUN apt-get clean
+
+# 45. Adicionar uma variável de ambiente para configurar a URL do banco de dados
+ENV SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/mydatabase
+
+# 46. Rodar um script de teste durante a construção
+RUN ./scripts/test.sh
+
+# 47. Excluir arquivos desnecessários após a construção para reduzir o tamanho da imagem
+RUN rm -rf /app/tmp
+
+# 48. Configurar o tempo de timeout para um serviço
+ENV SERVICE_TIMEOUT=30s
+
+# 49. Usar um script de configuração para a instalação do Kafka
+COPY ./scripts/kafka-setup.sh /app/kafka-setup.sh
+
+# 50. Rodar o script de configuração do Kafka no contêiner
+RUN chmod +x /app/kafka-setup.sh && /app/kafka-setup.sh

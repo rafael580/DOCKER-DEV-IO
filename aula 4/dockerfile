@@ -1,0 +1,14 @@
+# Usar OpenJDK 21 como base
+FROM openjdk:21-jdk-slim
+
+# Definir o diretório de trabalho
+WORKDIR /app
+
+# Copiar os arquivos do projeto
+COPY . .
+
+# Compilar o código e gerar o JAR
+RUN javac Main.java && jar cfe meu-app.jar Main Main.class
+
+# Definir o comando de execução
+CMD ["java", "-jar", "meu-app.jar"]
