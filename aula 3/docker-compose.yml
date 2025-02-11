@@ -1,6 +1,6 @@
 version: '3.8'  # Define a versão do Docker Compose. Aqui, estamos usando a versão 3.8.
 services:
-  app:
+  app: # nome do serviço dentro do docker compose
     build: .  # Inicia a construção da imagem Docker a partir do Dockerfile no diretório atual (.) para o serviço `app`.
     container_name: springboot_app  # Dá um nome personalizado ao contêiner do Spring Boot.
     ports:

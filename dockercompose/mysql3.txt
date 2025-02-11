@@ -1,0 +1,171 @@
+# Versão do Docker Compose
+version: '3.8'
+
+# Definição dos serviços
+services:
+  mysql:
+    # 1. Imagem do MySQL a ser utilizada (versão 8.0)
+    image: mysql:8.0
+
+    # 2. Nome do contêiner
+    container_name: mysql_container
+
+    # 3. Variáveis de ambiente para configurar o MySQL
+    environment:
+      # 4. Senha do usuário root
+      MYSQL_ROOT_PASSWORD: rootpassword
+      # 5. Nome do banco de dados que será criado automaticamente
+      MYSQL_DATABASE: mydatabase
+      # 6. Usuário que será criado automaticamente
+      MYSQL_USER: myuser
+      # 7. Senha do usuário criado
+      MYSQL_PASSWORD: mypassword
+      # 8. Configuração do fuso horário do contêiner
+      TZ: America/Sao_Paulo
+      # 9. Define o tamanho máximo de pacotes permitidos (em bytes)
+      max_allowed_packet: 64M
+      # 10. Habilita o modo estrito de validação de SQL
+      sql_mode: STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE
+
+    # 11. Mapeamento de portas (host:contêiner)
+    ports:
+      - "3306:3306"  # Expõe a porta 3306 do contêiner para a porta 3306 do host
+
+    # 12. Volumes para persistência de dados
+    volumes:
+      # 13. Persiste os dados do MySQL em um volume
+      - mysql_data:/var/lib/mysql
+      # 14. Monta um arquivo de configuração personalizado do MySQL
+      - ./my-custom.cnf:/etc/mysql/conf.d/custom.cnf
+      # 15. Monta um diretório de scripts para execução na inicialização
+      - ./init-scripts:/docker-entrypoint-initdb.d
+
+    # 16. Conecta o contêiner a uma rede específica
+    networks:
+      - mynetwork
+
+    # 17. Configuração de verificação de saúde
+    healthcheck:
+      # 18. Comando para verificar se o MySQL está funcionando
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      # 19. Intervalo entre verificações
+      interval: 10s
+      # 20. Tempo limite para a verificação
+      timeout: 5s
+      # 21. Número de tentativas antes de considerar o contêiner como não saudável
+      retries: 5
+
+    # 22. Comando personalizado para inicialização do MySQL
+    command: 
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+
+    # 23. Configuração de logging
+    logging:
+      # 24. Driver de logging (json-file é o padrão)
+      driver: "json-file"
+      options:
+        # 25. Tamanho máximo do arquivo de log
+        max-size: "10m"
+        # 26. Número máximo de arquivos de log
+        max-file: "3"
+
+    # 27. Limites de recursos
+    deploy:
+      resources:
+        limits:
+          # 28. Limite de uso de CPU (50% de um núcleo)
+          cpus: '0.5'
+          # 29. Limite de uso de memória (512 MB)
+          memory: 512M
+        reservations:
+          # 30. Reserva mínima de CPU (25% de um núcleo)
+          cpus: '0.25'
+          # 31. Reserva mínima de memória (256 MB)
+          memory: 256M
+
+    # 32. Reinício automático do contêiner em caso de falha
+    restart: unless-stopped
+
+    # 33. Configuração de usuário e grupo para execução do contêiner
+    user: "1000:1000"
+
+    # 34. Configuração do working directory dentro do contêiner
+    working_dir: /var/lib/mysql
+
+    # 35. Adiciona variáveis de ambiente a partir de um arquivo
+    env_file:
+      - ./mysql.env
+
+    # 36. Configuração de segurança (modo de isolamento)
+    security_opt:
+      - no-new-privileges:true
+
+    # 37. Configuração de ulimits (limites de recursos do sistema)
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 20000
+        hard: 40000
+
+    # 38. Configuração de dispositivos (exemplo: acesso a dispositivos do host)
+    devices:
+      - "/dev/sda:/dev/xvda:rwm"
+
+    # 39. Configuração de sysctls (parâmetros do kernel)
+    sysctls:
+      net.core.somaxconn: 1024
+      net.ipv4.tcp_syncookies: 0
+
+    # 40. Configuração de labels (metadados)
+    labels:
+      com.example.description: "MySQL Database Service"
+      com.example.version: "1.0"
+
+    # 41. Configuração de tmpfs (montagem de sistema de arquivos temporário)
+    tmpfs:
+      - /tmp
+
+    # 42. Configuração de cap_add (adiciona capacidades do Linux)
+    cap_add:
+      - SYS_NICE
+
+    # 43. Configuração de cap_drop (remove capacidades do Linux)
+    cap_drop:
+      - CHOWN
+
+    # 44. Configuração de dns (servidores DNS personalizados)
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+
+    # 45. Configuração de dns_search (domínios de busca DNS)
+    dns_search:
+      - example.com
+
+    # 46. Configuração de extra_hosts (mapeamento de hosts personalizados)
+    extra_hosts:
+      - "hostname:192.168.1.100"
+
+    # 47. Configuração de isolation (isolamento do contêiner)
+    isolation: default
+
+    # 48. Configuração de stop_grace_period (tempo de espera antes de parar o contêiner)
+    stop_grace_period: 10s
+
+    # 49. Configuração de stop_signal (sinal para parar o contêiner)
+    stop_signal: SIGTERM
+
+    # 50. Configuração de tty (aloca um terminal pseudo-TTY)
+    tty: true
+
+# Definição dos volumes
+volumes:
+  # Volume para persistir os dados do MySQL
+  mysql_data:
+
+# Definição das redes
+networks:
+  # Rede personalizada para conectar os serviços
+  mynetwork:

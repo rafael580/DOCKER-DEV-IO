@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+
+api-produtos:
+  container_name: api-produtos
+  build:
+    context: ../src # contexto de construção , onde o docker ira procurar os arquivos para se construir ou seja procura o dockerfile
+    dockerfile: ./web/dockerfile
+  restart: always
+  enviroment:
+    ASPNETCORE_ENVIRONMENT : Development
+  networks:
+    - store-networks
+  depends_on:
+    -cache-redis
+
+  
